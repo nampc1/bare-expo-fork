@@ -3,6 +3,19 @@ import { Text, ScrollView } from 'react-native'
 import { Worklet } from 'react-native-bare-kit'
 import RPC from 'bare-rpc'
 import { bundle, COMMANDS, MODULES, WdkModuleMetadata } from '@tetherto/pear-wrk-wdk'
+import {
+  EVM_ERC_4337_WALLET_MANAGER_CONFIG,
+  EVM_WALLET_MANAGER_CONFIG,
+  BTC_WALLET_MANAGER_CONFIG,
+  SPARK_WALLET_MANAGER_CONFIG,
+  TEST_SEED,
+  SOLANA_WALLET_MANAGER_CONFIG,
+  TRON_WALLET_MANAGER_CONFIG,
+  TRON_GASFREE_WALLET_MANAGER_CONFIG,
+  TON_WALLET_MANAGER_CONFIG,
+  TON_GASLESS_WALLET_MANAGER_CONFIG,
+  AAVE_LENDING_EVM_CONFIG
+} from './config'
 
 export default function () {
   const [response, setResponse] = useState<string | null>(null)
@@ -17,45 +30,6 @@ export default function () {
     const rpc = new RPC(IPC, (req) => {
       console.log(req.command)
     })
-
-    const networkConfigs: Record<string, any> = {
-      ethereum: {
-        chainId: 1,
-        blockchain: 'ethereum',
-        provider: 'https://rpc.mevblocker.io/fast',
-        bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
-        paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
-        paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
-        entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-        safeModulesVersion: '0.3.0',
-        paymasterToken: {
-          address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT
-        },
-        transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
-      },
-      bitcoin: {
-        network: 'testnet',
-        host: 'electrum.blockstream.info',
-        port: 50001
-      },
-      polygon: {
-        chainId: 137,
-        blockchain: 'polygon',
-        provider: 'https://polygon-rpc.com',
-        bundlerUrl: 'https://api.candide.dev/public/v3/polygon',
-        paymasterUrl: 'https://api.candide.dev/public/v3/polygon',
-        paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
-        entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-        safeModulesVersion: '0.3.0',
-        paymasterToken: {
-          address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // USDT on Polygon
-        },
-        transferMaxFee: 100000
-      },
-      spark: {
-        network: 'REGTEST'
-      }
-    }
 
     const run = async () => {
       const logs: string[] = []
@@ -78,43 +52,105 @@ export default function () {
             name: 'ethereum',
             moduleName: MODULES.EVM_ERC_4337,
             network: 'ethereum',
-            config: networkConfigs.ethereum
+            config: EVM_ERC_4337_WALLET_MANAGER_CONFIG
           },
           {
             type: 'wallet',
             name: 'polygon',
             moduleName: MODULES.EVM,
             network: 'polygon',
-            config: networkConfigs.polygon
+            config: EVM_WALLET_MANAGER_CONFIG
           },
           {
             type: 'wallet',
             name: 'bitcoin',
             moduleName: MODULES.BTC,
             network: 'bitcoin',
-            config: networkConfigs.bitcoin
+            config: BTC_WALLET_MANAGER_CONFIG
           },
           {
             type: 'wallet',
             name: 'spark',
             moduleName: MODULES.SPARK,
             network: 'spark',
-            config: networkConfigs.spark
+            config: SPARK_WALLET_MANAGER_CONFIG
+          },
+          {
+            type: 'wallet',
+            name: 'solana',
+            moduleName: MODULES.SOLANA,
+            network: 'solana',
+            config: SOLANA_WALLET_MANAGER_CONFIG
+          },
+          {
+            type: 'wallet',
+            name: 'tron',
+            moduleName: MODULES.TRON,
+            network: 'tron',
+            config: TRON_WALLET_MANAGER_CONFIG
+          },
+          {
+            type: 'wallet',
+            name: 'tron-gasfree',
+            moduleName: MODULES.TRON_GASFREE,
+            network: 'tron-gasfree',
+            config: TRON_GASFREE_WALLET_MANAGER_CONFIG
+          },
+          {
+            type: 'wallet',
+            name: 'ton',
+            moduleName: MODULES.TON,
+            network: 'ton',
+            config: TON_WALLET_MANAGER_CONFIG
+          },
+          {
+            type: 'wallet',
+            name: 'ton-gasless',
+            moduleName: MODULES.TON_GASLESS,
+            network: 'ton-gasless',
+            config: TON_GASLESS_WALLET_MANAGER_CONFIG
+          },
+          {
+            type: 'protocol',
+            name: 'aave',
+            moduleName: MODULES.AAVE_EVM,
+            network: 'ethereum',
+            config: AAVE_LENDING_EVM_CONFIG
           }
         ]
 
+        console.log(TEST_SEED)
+
         const startReq = rpc.request(COMMANDS.START)
         startReq.send(JSON.stringify({
-          seedPhrase: 'cook voyage document eight skate token alien guide drink uncle term abuse',
+          seedPhrase: TEST_SEED,
           items
         }))
         const startRes = await startReq.reply('utf-8')
         appendLog('START', JSON.parse(startRes as string))
 
         const getAddressReq = rpc.request(COMMANDS.GET_ADDRESS)
-        getAddressReq.send(JSON.stringify(['ethereum', 'polygon', 'bitcoin', 'spark']))
+        getAddressReq.send(JSON.stringify([
+          'ethereum',
+          'polygon',
+          'bitcoin',
+          'spark',
+          'solana',
+          'tron',
+          'tron-gasfree',
+          'ton',
+          'ton-gasless'
+        ]))
         const getAddressRes = await getAddressReq.reply('utf-8')
         appendLog('GET_ADDRESS', JSON.parse(getAddressRes as string))
+
+        const quoteReq = rpc.request(COMMANDS.QUOTE_LENDING_SUPPLY)
+        quoteReq.send(JSON.stringify([
+          { chain: 'ethereum', name: 'aave' },
+          { token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', amount: 1000000 }
+        ]))
+        const quoteRes = await quoteReq.reply('utf-8')
+        appendLog('QUOTE_LENDING_SUPPLY', JSON.parse(quoteRes as string))
       } catch (err) {
         console.error(err)
         appendLog('ERROR', err)
