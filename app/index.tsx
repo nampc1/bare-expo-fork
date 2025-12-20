@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Text, ScrollView } from 'react-native'
 import { Worklet } from 'react-native-bare-kit'
 import RPC from 'bare-rpc'
-import { bundle, COMMANDS, MODULES } from '@tetherto/pear-wrk-wdk'
+import { bundle, COMMANDS, MODULES, WdkModuleMetadata } from '@tetherto/pear-wrk-wdk'
 
 export default function () {
   const [response, setResponse] = useState<string | null>(null)
@@ -72,7 +72,7 @@ export default function () {
         const pingRes = await pingReq.reply('utf-8')
         appendLog('PING', pingRes)
 
-        const items = [
+        const items: WdkModuleMetadata[] = [
           {
             type: 'wallet',
             name: 'ethereum',
