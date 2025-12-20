@@ -54,6 +54,22 @@ export default function () {
       },
       spark: {
         network: 'REGTEST'
+      },
+      solana: {
+        rpcUrl: 'https://api.devnet.solana.com',
+        wsUrl: 'wss://api.devnet.solana.com'
+      },
+      tron: {
+        provider: 'https://api.trongrid.io'
+      },
+      ton: {
+        tonClient: {
+          url: 'https://testnet.toncenter.com/api/v2/jsonRPC'
+        }
+      },
+      aave: {
+        provider: 'https://rpc.mevblocker.io/fast',
+        transferMaxFee: 100000
       }
     }
 
@@ -76,14 +92,14 @@ export default function () {
           {
             type: 'wallet',
             name: 'ethereum',
-            moduleName: MODULES.EVM_ERC_4337,
+            moduleName: MODULES.EVM,
             network: 'ethereum',
             config: networkConfigs.ethereum
           },
           {
             type: 'wallet',
             name: 'polygon',
-            moduleName: MODULES.EVM,
+            moduleName: MODULES.EVM_ERC_4337,
             network: 'polygon',
             config: networkConfigs.polygon
           },
@@ -100,6 +116,13 @@ export default function () {
             moduleName: MODULES.SPARK,
             network: 'spark',
             config: networkConfigs.spark
+          },
+          {
+            type: 'protocol',
+            name: 'aave',
+            moduleName: MODULES.AAVE_EVM,
+            network: 'ethereum',
+            config: networkConfigs.aave
           }
         ]
 
@@ -115,6 +138,14 @@ export default function () {
         getAddressReq.send(JSON.stringify(['ethereum', 'polygon', 'bitcoin', 'spark']))
         const getAddressRes = await getAddressReq.reply('utf-8')
         appendLog('GET_ADDRESS', JSON.parse(getAddressRes as string))
+
+        const quoteReq = rpc.request(COMMANDS.QUOTE_LENDING_SUPPLY)
+        quoteReq.send(JSON.stringify([
+          { chain: 'ethereum', name: 'aave' },
+          { token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', amount: 1000000000 }
+        ]))
+        const quoteRes = await quoteReq.reply('utf-8')
+        appendLog('QUOTE_LENDING_SUPPLY', JSON.parse(quoteRes as string))
       } catch (err) {
         console.error(err)
         appendLog('ERROR', err)
